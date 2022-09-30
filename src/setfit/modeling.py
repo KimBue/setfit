@@ -217,6 +217,30 @@ def sentence_pairs_generation(sentences, labels, pairs):
     # Return a 2-tuple of our image pairs and labels
     return pairs
 
+def sentence_pairs_generation_with_default_class(sentences, labels, pairs, defaultClass):
+    # Initialize two empty lists to hold the (sentence, sentence) pairs and
+    # labels to indicate if a pair is positive or negative
+
+    num_classes = np.unique(labels)
+    idx = [np.where(labels == i)[0] for i in num_classes]
+
+    for first_idx in range(len(sentences)):
+        current_sentence = sentences[first_idx]
+        label = labels[first_idx]
+        if label!= defaultClass:
+            second_idx = np.random.choice(idx[np.where(num_classes == label)[0][0]])
+            positive_sentence = sentences[second_idx]
+            # Prepare a positive pair and update the sentences and labels
+            # lists, respectively
+            pairs.append(InputExample(texts=[current_sentence, positive_sentence], label=1.0))
+
+        negative_idx = np.where(labels != label)[0]
+        negative_sentence = sentences[np.random.choice(negative_idx)]
+        # Prepare a negative pair of images and update our lists
+        pairs.append(InputExample(texts=[current_sentence, negative_sentence], label=0.0))
+    # Return a 2-tuple of our image pairs and labels
+    return pairs
+
 
 def sentence_pairs_generation_multilabel(sentences, labels, pairs):
     # Initialize two empty lists to hold the (sentence, sentence) pairs and

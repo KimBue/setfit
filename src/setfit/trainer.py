@@ -8,7 +8,7 @@ from sentence_transformers.datasets import SentenceLabelDataset
 from sentence_transformers.losses.BatchHardTripletLoss import BatchHardTripletLossDistanceFunction
 from torch.utils.data import DataLoader
 
-from .modeling import SetFitModel, SupConLoss, sentence_pairs_generation
+from .modeling import SetFitModel, SupConLoss, sentence_pairs_generation, sentence_pairs_generation_with_default_class
 
 
 class SetFitTrainer:
@@ -18,6 +18,7 @@ class SetFitTrainer:
         train_dataset,
         eval_dataset=None,
         metric: str = "accuracy",
+        defaultClass=None,
         loss_class=losses.CosineSimilarityLoss,
         num_iterations: int = 20,
         num_epochs: int = 1,
@@ -34,6 +35,7 @@ class SetFitTrainer:
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self.defaultClass = defaultClass
 
     def train(self):
         # self.model.model_body.load_state_dict(copy.deepcopy(self.model.model_original_state))
@@ -77,7 +79,10 @@ class SetFitTrainer:
             train_examples = []
 
             for _ in range(self.num_iterations):
-                train_examples = sentence_pairs_generation(np.array(x_train), np.array(y_train), train_examples)
+                if self.defaultClass is not None:
+                    train_examples = sentence_pairs_generation(np.array(x_train), np.array(y_train), train_examples)
+                else:
+                    train_examples = sentence_pairs_generation_with_default_class(np.array(x_train), np.array(y_train), train_examples, defaultClass=self.defaultClass)
 
             train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=self.batch_size)
             train_loss = self.loss_class(self.model.model_body)
